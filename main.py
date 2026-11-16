@@ -4,6 +4,12 @@ from pip._internal.utils import deprecation
 from pymongo import MongoClient, AsyncMongoClient, server_api
 import json
 import asyncio
+from typing import TypedDict
+
+
+class Movie(TypedDict):
+    name: str
+    year: int
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
@@ -23,32 +29,32 @@ async def main():
         collection = "Movies"
 
 
-    client = AsyncMongoClient(uri,server_api=pymongo.server_api.ServerApi(version="1", strict=True, deprecation_errors=True))
+    client: AsyncMongoClient[Movie] = AsyncMongoClient(uri,server_api=pymongo.server_api.ServerApi(version="1", strict=True, deprecation_errors=True))
 
     print(uri)
-    client = AsyncMongoClient(uri)
-    await client.admin.command("ping")
-    print("Connected Successfully")
+    async with AsyncMongoClient(uri) as client:
+        await client.admin.command("ping")
+        print("Connected Successfully")
 
 
 
 
 
-    try:
-        database = client.get_database(database)
-        movies = database.get_collection(collection)
+        try:
+            database = client.get_database(database)
+            movies = database.get_collection(collection)
 
 
-        query = {"title": "Back to the Future"}
-        project = {'_id':1, 'year':1, 'director': { '$slice': ['$directors', 1] }}
-        movie = await movies.find_one(query, project)
-        #print(movie)
+            query = {"title": "Back to the Future"}
+            project = {'_id':1, 'year':1, 'director': { '$slice': ['$directors', 1] }}
+            movie = await movies.find_one(query, project)
+            #print(movie)
 
-        print(json.dumps(movie, indent=4, default=str))
+            print(json.dumps(movie, indent=4, default=str))
 
-        await client.close()
-    except Exception as e:
-        raise Exception("Unable to find the document due to the following error:",e)
+            # await client.close()
+        except Exception as e:
+            raise Exception("Unable to find the document due to the following error:",e)
 
 asyncio.run(main())
 
